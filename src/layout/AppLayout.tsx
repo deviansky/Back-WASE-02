@@ -9,10 +9,12 @@ const LayoutContent: React.FC = () => {
 
   return (
     <div className="min-h-screen xl:flex">
+      {/* Navbar */}
       <div>
         <AppSidebar />
         <Backdrop />
       </div>
+      {/* Isinya */}
       <div
         className={`flex-1 transition-all duration-300 ease-in-out ${
           isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
