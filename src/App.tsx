@@ -18,6 +18,8 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import Kegiatan from "./pages/Kegiatana/kegiatan";
+import Pemasukan from "./pages/Keuangan/Pemasukan"
 
 export default function App() {
   return (
@@ -33,6 +35,14 @@ export default function App() {
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
+            
+            {/* Keuangan */}
+            <Route path="/Pemasukan" element={<Pemasukan />} />
+            <Route path="/kegiatan" element={<Kegiatan />} />
+
+            {/* Kegiatan */}
+            <Route path="/kegiatan" element={<Kegiatan />} />
+
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />

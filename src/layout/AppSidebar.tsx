@@ -38,14 +38,14 @@ const navItems: NavItem[] = [
   },
   {
     icon: <TableIcon />,
-    name: "Keuangan",    subItems: [{ name: "Pemasukan", path: "/blank", pro: false }
+    name: "Keuangan",    subItems: [{ name: "Pemasukan", path: "/Pemasukan", pro: false }
       ,{ name: "Pengeluaran", path: "/form-elements", pro: false }],
       // "Form Elements"
   },
   {
     name: "Kegiatan",
     icon: <ListIcon />,
-    path: "/blank"
+    path: "/kegiatan"
     // path: "/profile",
   },
   {
