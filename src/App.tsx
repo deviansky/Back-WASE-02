@@ -20,6 +20,8 @@ import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Kegiatan from "./pages/Kegiatana/kegiatan";
 import Pemasukan from "./pages/Keuangan/Pemasukan"
+import Products from "./pages/tesAPI";
+import PenghuniCRUD from "./pages/Penghuni";
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
+            <Route index path="/product" element={<Products />} />
+            <Route path="/penghuni" element={<PenghuniCRUD />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
@@ -42,7 +46,6 @@ export default function App() {
 
             {/* Kegiatan */}
             <Route path="/kegiatan" element={<Kegiatan />} />
-
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />

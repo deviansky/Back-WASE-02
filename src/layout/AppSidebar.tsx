@@ -51,7 +51,7 @@ const navItems: NavItem[] = [
   {
     name: "Penghuni",
     icon: <UserCircleIcon />,
-    path: "/basic-tables",
+    path: "/penghuni",
   },
   // {
   //   name: "Pages",
