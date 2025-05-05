@@ -22,6 +22,7 @@ import Kegiatan from "./pages/Kegiatana/kegiatan";
 import Pemasukan from "./pages/Keuangan/Pemasukan"
 import Products from "./pages/tesAPI";
 import PenghuniCRUD from "./pages/Penghuni";
+import AdminRoute from "./components/routes/AdminRoute";
 
 export default function App() {
   return (
@@ -33,7 +34,14 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
             <Route index path="/product" element={<Products />} />
-            <Route path="/penghuni" element={<PenghuniCRUD />} />
+            <Route
+              path="/penghuni"
+              element={
+                <AdminRoute>
+                  <PenghuniCRUD />
+                </AdminRoute>
+              }
+            />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
@@ -41,11 +49,24 @@ export default function App() {
             <Route path="/blank" element={<Blank />} />
             
             {/* Keuangan */}
-            <Route path="/Pemasukan" element={<Pemasukan />} />
-            <Route path="/kegiatan" element={<Kegiatan />} />
+            <Route
+              path="/Pemasukan"
+              element={
+                <AdminRoute>
+                  <Pemasukan />
+                </AdminRoute>
+              }
+            />
 
             {/* Kegiatan */}
-            <Route path="/kegiatan" element={<Kegiatan />} />
+            <Route
+              path="/kegiatan"
+              element={
+                <AdminRoute>
+                  <Kegiatan />
+                </AdminRoute>
+              }
+            />
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />
