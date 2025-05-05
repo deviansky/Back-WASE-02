@@ -15,9 +15,6 @@ export default function Home() {
 
   return (
     <>
-      <h1 className="mb-5 text-lg font-bold text-gray-800 dark:text-white/90 lg:mb-7">
-        Beranda
-      </h1>
       <div className="grid grid-cols-12 gap-2 md:gap-6">
         <div className="col-span-12 ">
           <EcommerceMetrics />

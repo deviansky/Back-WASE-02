@@ -20,7 +20,7 @@ export default function SignInForm() {
     setError(null);
   
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
+      const response = await fetch("http://localhost:5000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,9 +53,10 @@ export default function SignInForm() {
   
 
   return (
-    <div className="flex flex-col justify-center min-h-screen items-center">
+    <div className="flex flex-col min-w-md justify-center mr-30 ml-20 items-center">
       <div className="w-full max-w-md p-6 bg-white dark:bg-gray-900 rounded shadow">
-        <h1 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Sign In</h1>
+        <h1 className="text-xl font-bold text-gray-800 dark:text-white mb-1">Login Akun</h1>
+        <p className="text-sm font-semibold text-gray-500 dark:text-white mb-4">Isi Data Dibawah Ini Untuk Login Sebagai Penghuni</p>
 
         {error && (
           <div className="mb-4 text-sm text-red-600 bg-red-100 p-3 rounded">
@@ -107,7 +108,7 @@ export default function SignInForm() {
           </div>
 
           <Button type="submit" className="w-full">
-            Sign In
+            Login Akun
           </Button>
         </form>
       </div>

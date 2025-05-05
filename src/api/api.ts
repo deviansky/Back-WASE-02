@@ -1,5 +1,5 @@
 // src/api/api.ts
-const API_URL = 'http://localhost:8080';
+const API_URL = 'http://localhost:5000';
 
 // Tipe data dasar
 export interface Product {
