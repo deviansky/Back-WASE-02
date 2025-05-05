@@ -1,5 +1,5 @@
 // src/api/api.ts
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:8080';
 
 // Tipe data dasar
 export interface Product {
@@ -41,6 +41,17 @@ export interface YearlyStatistic {
   sales: number;
   revenue: number;
 }
+
+export interface Kegiatan {
+  id: number;
+  judul: string;
+  deskripsi: string;
+  tanggal: string;
+  waktu_acara: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 
 // Utility function untuk HTTP requests
 const apiRequest = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
@@ -136,12 +147,42 @@ export const statisticsApi = {
   },
 };
 
+// API untuk Kegiatan
+export const kegiatanApi = {
+  getAll: (): Promise<Kegiatan[]> =>
+    apiRequest<Kegiatan[]>('/kegiatan'),
+
+  create: (kegiatan: Omit<Kegiatan, 'id'>): Promise<Kegiatan> =>
+    apiRequest<Kegiatan>('/kegiatan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(kegiatan),
+    }),
+
+  update: (kegiatan: Kegiatan): Promise<Kegiatan> =>
+    apiRequest<Kegiatan>(`/kegiatan/${kegiatan.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(kegiatan),
+    }),
+
+  delete: (id: number): Promise<void> =>
+    apiRequest<void>(`/kegiatan/${id}`, { method: 'DELETE' }),
+};
+
+
+
 // Untuk mendukung kompatibilitas dengan kode yang sudah ada
 export const fetchProducts = productApi.getAll;
 export const fetchPenghuni = penghuniApi.getAll;
 export const addPenghuni = penghuniApi.create;
 export const updatePenghuni = penghuniApi.update;
 export const deletePenghuni = penghuniApi.delete;
+
+export const fetchKegiatan = kegiatanApi.getAll;
+export const addKegiatan = kegiatanApi.create;
+export const updateKegiatan = kegiatanApi.update;
+export const deleteKegiatan = kegiatanApi.delete;
 
 export const fetchMonthlyStatistics = statisticsApi.monthly.getByYear;
 export const fetchQuarterlyStatistics = statisticsApi.quarterly.getByYear;
