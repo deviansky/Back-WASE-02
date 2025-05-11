@@ -149,8 +149,8 @@ export default function StatisticsChart({
     return {
       categories,
       series: [
-        { name: "Penjualan", data: salesData },
-        { name: "Pendapatan", data: revenueData }
+        { name: "Pemasukan", data: salesData },
+        { name: "Pengeluaran", data: revenueData }
       ]
     };
   }, [period, year, monthlyData, quarterlyData, yearlyData]);
@@ -287,11 +287,11 @@ export default function StatisticsChart({
         
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
           {/* Period selector */}
-          <ChartTab 
+          {/* <ChartTab 
             tabs={periodTabs} 
             activeTab={period}
             onChange={(tab) => handlePeriodChange(tab as ChartPeriod)} 
-          />
+          /> */}
           
           {/* Year selector (not shown for yearly period) */}
           {period !== "yearly" && (
@@ -340,7 +340,7 @@ export default function StatisticsChart({
         <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
           <div className="flex items-center">
             <div className="w-3 h-3 rounded-full bg-[#465FFF] mr-2"></div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Penjualan</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Pemasukan</span>
           </div>
           <div className="mt-2">
             <span className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -355,7 +355,7 @@ export default function StatisticsChart({
         <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
           <div className="flex items-center">
             <div className="w-3 h-3 rounded-full bg-[#9CB9FF] mr-2"></div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Pendapatan</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Pengeluaran</span>
           </div>
           <div className="mt-2">
             <span className="text-xl font-semibold text-gray-900 dark:text-white">

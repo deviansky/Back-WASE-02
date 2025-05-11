@@ -4,16 +4,16 @@ import {
   addKegiatan,
   updateKegiatan,
   deleteKegiatan,
-  fetchPenghuni, 
+  fetchPenghuni,
   Kegiatan,
   Penghuni,
+  absensiApi,
+  NotulenItem
 } from '../../api/api';
 
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
-
-
 
 const KegiatanCRUD: React.FC = () => {
   const [kegiatan, setKegiatan] = useState<Kegiatan[]>([]);
@@ -31,8 +31,11 @@ const KegiatanCRUD: React.FC = () => {
   const [isAbsensiModalOpen, setIsAbsensiModalOpen] = useState(false);
   const [selectedKegiatan, setSelectedKegiatan] = useState<Kegiatan | null>(null);
   const [absensiData, setAbsensiData] = useState<{ [penghuniId: number]: string }>({});
-
   const [penghunis, setPenghunis] = useState<Penghuni[]>([]);
+
+  const [isNotulenModalOpen, setIsNotulenModalOpen] = useState(false);
+  const [notulenFile, setNotulenFile] = useState<File | null>(null);
+  const [existingNotulen, setExistingNotulen] = useState<NotulenItem | null>(null);
 
 
 
@@ -44,7 +47,7 @@ const KegiatanCRUD: React.FC = () => {
       waktuAcara !== null
     );
   }, [judul, deskripsi, tanggal, waktuAcara]);
-  
+
   useEffect(() => {
     const loadPenghunis = async () => {
       try {
@@ -56,7 +59,6 @@ const KegiatanCRUD: React.FC = () => {
     };
     loadPenghunis();
   }, []);
-  
 
   const loadKegiatan = async () => {
     try {
@@ -85,7 +87,6 @@ const KegiatanCRUD: React.FC = () => {
       tanggal: tanggal ? tanggal.toISOString().split('T')[0] : '',
       waktu_acara: waktuAcara ? waktuAcara.toTimeString().slice(0, 5) : '',
     };
-    
 
     try {
       if (editingId !== null) {
@@ -136,6 +137,99 @@ const KegiatanCRUD: React.FC = () => {
     setWaktuAcara(null);
   };  
 
+  const openAbsensiModal = async (item: Kegiatan) => {
+    try {
+      setSelectedKegiatan(item);
+      const data = await absensiApi.getByKegiatan(item.id);
+      const initialAbsensi = Object.fromEntries(
+        data.map(d => [d.id_penghuni, d.status_kehadiran])
+      );
+      setAbsensiData(initialAbsensi);
+      setIsAbsensiModalOpen(true);
+    } catch (error) {
+      console.error('❌ Gagal memuat absensi:', error);
+      alert('Gagal memuat absensi');
+    }
+  };
+  
+  // Fungsi untuk submit absensi
+  const handleAbsensiSubmit = async () => {
+    if (!selectedKegiatan) return;
+  
+    const absensiList = Object.entries(absensiData).map(
+      ([id_penghuni, status_kehadiran]) => ({
+        id_penghuni: parseInt(id_penghuni),
+        status_kehadiran,
+      })
+    );
+  
+    try {
+      await absensiApi.create(selectedKegiatan.id, absensiList);
+      alert('✅ Absensi berhasil disimpan!');
+      setIsAbsensiModalOpen(false);
+    } catch (error) {
+      console.error('❌ Gagal menyimpan absensi:', error);
+      alert('Gagal menyimpan absensi');
+    }
+  };
+  
+  const handleNotulenUpload = async () => {
+    if (!selectedKegiatan || !notulenFile) {
+      alert("Pilih file dan kegiatan terlebih dahulu.");
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('id_kegiatan', selectedKegiatan.id.toString());
+    formData.append('file', notulenFile);
+  
+    try {
+      const url = existingNotulen
+        ? `http://localhost:5000/notulen/${existingNotulen.id}`
+        : `http://localhost:5000/notulen/upload`;
+  
+      const method = existingNotulen ? 'PUT' : 'POST';
+  
+      const response = await fetch(url, {
+        method,
+        body: formData,
+      });
+  
+      if (!response.ok) throw new Error('Upload gagal');
+  
+      alert("✅ Notulen berhasil diupload");
+      setIsNotulenModalOpen(false);
+      setNotulenFile(null);
+      setExistingNotulen(null);
+    } catch (error) {
+      console.error("❌ Upload gagal:", error);
+      alert("Gagal upload notulen.");
+    }
+  };
+  
+
+  const openNotulenModal = async (item: Kegiatan) => {
+    setSelectedKegiatan(item);
+    setNotulenFile(null);
+    try {
+      const res = await fetch(`http://localhost:5000/notulen/kegiatan/${item.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExistingNotulen(data);
+      } else {
+        setExistingNotulen(null);
+      }
+    } catch (error) {
+      console.error("Gagal memuat notulen:", error);
+      setExistingNotulen(null);
+    }
+    setIsNotulenModalOpen(true);
+  };
+  
+  
+  
+
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -165,21 +259,20 @@ const KegiatanCRUD: React.FC = () => {
                 {/* Kiri: Absensi dan Notulen */}
                 <div className="flex gap-2">
                 <button
-                    onClick={() => {
-                      setSelectedKegiatan(item);
-                      setIsAbsensiModalOpen(true);
-                    }}
-                    className="bg-green-500 text-white px-3 py-1 rounded"
+                  onClick={() => openAbsensiModal(item)}
+                  className="bg-green-500 text-white px-3 py-1 rounded"
+                >
+                  Absensi
+                </button>
+
+                <button
+                    onClick={() => openNotulenModal(item)}
+                    className="bg-purple-500 text-white px-3 py-1 rounded"
                   >
-                    Absensi
+                    Upload Notulen
                   </button>
 
-                  <button
-                    onClick={() => alert(`Notulen untuk ${item.judul}`)}
-                    className="bg-indigo-500 text-white px-3 py-1 rounded"
-                  >
-                    Notulen
-                  </button>
+
                 </div>
 
                 {/* Kanan: Tombol ikon */}
@@ -280,37 +373,38 @@ const KegiatanCRUD: React.FC = () => {
       )}
 
       {isAbsensiModalOpen && selectedKegiatan && (
-        <div className="fixed inset-0  flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-xl">
-            <h2 className="text-xl font-semibold mb-4">Absensi - {selectedKegiatan.judul}</h2>
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-4">
+              Absensi - {selectedKegiatan.judul}
+            </h2>
 
-            {/* Simulasi data penghuni, ganti dengan API jika perlu */}
-            {penghunis
-              .filter(p => p.id !== null) // pastikan id tidak null
-              .map(p => (
-                <div key={p.id!} className="mb-4">
-                  <label className="block mb-1">{p.nama}</label>
-                  <select
-                    value={absensiData[p.id!] || ''}
-                    onChange={e =>
-                      setAbsensiData(prev => ({
-                        ...prev,
-                        [p.id!]: e.target.value
-                      }))
-                    }
-                    className="w-full p-2 border rounded"
-                  >
-                    <option value="">Pilih status</option>
-                    <option value="Hadir">Hadir</option>
-                    <option value="Sakit">Sakit</option>
-                    <option value="Izin">Izin</option>
-                    <option value="Alpha">Alpha</option>
-                  </select>
+            {penghunis.map(p => (
+              <div key={p.id} className="mb-4">
+                <label className="block mb-1">{p.nama}</label>
+                <div className="flex flex-row gap-4">
+                  {["Hadir", "Sakit", "Izin", "Alpha"].map(status => (
+                    <label key={status} className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        name={`status-${p.id}`}
+                        value={status}
+                        checked={absensiData[p.id!] === status}
+                        onChange={() =>
+                          setAbsensiData(prev => ({
+                            ...prev,
+                            [p.id!]: status,
+                          }))
+                        }
+                        className="mr-1"
+                      />
+                      {status}
+                    </label>
+                  ))}
                 </div>
+
+              </div>
             ))}
-
-
-
 
             <div className="flex justify-end gap-2">
               <button
@@ -320,11 +414,7 @@ const KegiatanCRUD: React.FC = () => {
                 Batal
               </button>
               <button
-                onClick={() => {
-                  console.log('Absensi Disimpan:', absensiData);
-                  // Simpan absensi ke backend di sini
-                  setIsAbsensiModalOpen(false);
-                }}
+                onClick={handleAbsensiSubmit}
                 className="bg-green-600 text-white px-4 py-2 rounded"
               >
                 Simpan
@@ -333,6 +423,55 @@ const KegiatanCRUD: React.FC = () => {
           </div>
         </div>
       )}
+
+      {isNotulenModalOpen && selectedKegiatan && (
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-xl font-semibold mb-4">
+              Upload Notulen - {selectedKegiatan.judul}
+            </h2>
+            {existingNotulen && (
+              <div className="mb-4 text-sm text-gray-600">
+                File saat ini:{" "}
+                <a
+                  href={`http://localhost:5000/uploads/notulen/${existingNotulen.file}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  {existingNotulen.file}
+                </a>
+              </div>
+            )}
+
+
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={e => setNotulenFile(e.target.files?.[0] || null)}
+              className="w-full mb-4 p-2 border rounded"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setIsNotulenModalOpen(false)}
+                className="bg-gray-300 px-4 py-2 rounded"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleNotulenUpload}
+                className="bg-purple-600 text-white px-4 py-2 rounded"
+              >
+                Upload
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
 
     </div>
   );
