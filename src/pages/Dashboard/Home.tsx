@@ -4,6 +4,7 @@ import PageMeta from "../../components/common/PageMeta";
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { pemasukanApi, PemasukanItem } from "../../api/api";
+import kegiatan from "../Kegiatana/kegiatan"
 
 const monthOrder = [
   "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -114,8 +115,9 @@ export default function Home() {
             selected={date}
             onSelect={setDate}
             className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6"
-          />
+          />,
         </div>
+        <kegiatan/>
       </div>
     </>
   );
