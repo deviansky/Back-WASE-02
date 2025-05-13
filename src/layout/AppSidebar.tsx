@@ -31,10 +31,7 @@ const navItems: NavItem[] = [
   {
     icon: <TableIcon />,
     name: "Keuangan",
-    subItems: [
-      { name: "Pemasukan", path: "/Pemasukan", pro: false },
-      { name: "Pengeluaran", path: "/form-elements", pro: false },
-    ],
+    path: "/Pemasukan",
   },
   {
     name: "Kegiatan",
