@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
+import { EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
@@ -12,28 +12,38 @@ export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setIsLoading(true);
   
     try {
-      const response = await fetch("http://localhost:5000/auth/login", {
+      console.log("Attempting login with:", { email });
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+        mode: 'cors',
+        credentials: 'include',
       });
   
+      console.log("Login response status:", response.status);
+      
       if (!response.ok) {
-        const errMsg = await response.text();
-        throw new Error(errMsg || "Login gagal");
+        const errText = await response.text();
+        console.error("Login error response:", errText);
+        throw new Error(errText || "Login gagal");
       }
   
       const data = await response.json();
+      console.log("Login successful, received data:", { token: data.token ? "exists" : "missing", user: data.user ? "exists" : "missing" });
   
       // Simpan token & user ke localStorage
       localStorage.setItem("token", data.token);
@@ -46,8 +56,15 @@ export default function SignInForm() {
         navigate("/");
       }
   
-    } catch (err: any) {
-      setError(err.message || "Terjadi kesalahan saat login");
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+      if (err instanceof Error) {
+        setError(err.message || "Terjadi kesalahan saat login");
+      } else {
+        setError("Terjadi kesalahan saat login");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -107,8 +124,8 @@ export default function SignInForm() {
             <a href="/reset-password" className="text-sm text-brand-500 hover:underline">Forgot password?</a>
           </div>
 
-          <Button type="submit" className="w-full">
-            Login Akun
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Loading..." : "Login Akun"}
           </Button>
         </form>
       </div>

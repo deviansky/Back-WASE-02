@@ -5,7 +5,7 @@ import { Penghuni } from '../../api/api';
 
 interface PenghuniFormProps {
   penghuni?: Penghuni;
-  onSubmit: (penghuni: any) => void;
+  onSubmit: (penghuni: Penghuni | Omit<Penghuni, 'id'>) => void;
   onCancel: () => void;
 }
 

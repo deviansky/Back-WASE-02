@@ -17,6 +17,16 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/auth': {
+        target: 'https://sadebackend-4yyydjdi1-dittas-projects.vercel.app',
+        changeOrigin: true,  // Mengubah origin untuk permintaan
+        secure: false,       // Gunakan jika server backend menggunakan HTTPS
+        rewrite: (path) => path.replace(/^\/auth/, ''), // Sesuaikan URL API yang dipanggil
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

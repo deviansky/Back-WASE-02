@@ -4,7 +4,6 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { EventInput, DateSelectArg, EventClickArg } from "@fullcalendar/core";
-import { Modal } from "../components/ui/modal";
 import { useModal } from "../hooks/useModal";
 import PageMeta from "../components/common/PageMeta";
 import { fetchKegiatan } from "../api/api";
@@ -25,21 +24,21 @@ const Calendar: React.FC = () => {
   const [eventLevel, setEventLevel] = useState("");
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
-  const { isOpen, openModal, closeModal } = useModal();
+  const { openModal, closeModal } = useModal();
 
-  const calendarsEvents = {
-    Danger: "danger",
-    Success: "success",
-    Primary: "primary",
-    Warning: "warning",
-  };
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const data = await fetchKegiatan();
 
-        const formattedEvents = data.map((item: any) => ({
+        interface KegiatanItem {
+          id: number;
+          judul: string;
+          tanggal: string;
+        }
+
+        const formattedEvents = data.map((item: KegiatanItem) => ({
           id: item.id.toString(),
           title: item.judul,
           start: item.tanggal,
@@ -137,12 +136,20 @@ const Calendar: React.FC = () => {
             eventContent={renderEventContent}
           />
         </div>
+        <button
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          onClick={handleAddOrUpdateEvent}
+        >
+          Add or Update Event
+        </button>
       </div>
     </>
   );
 };
 
-const renderEventContent = (eventInfo: any) => {
+import { EventContentArg } from "@fullcalendar/core";
+
+const renderEventContent = (eventInfo: EventContentArg) => {
   const colorClass = `fc-bg-${eventInfo.event.extendedProps.calendar?.toLowerCase() || 'primary'}`;
   return (
     <div className={`event-fc-color flex fc-event-main ${colorClass} p-1 rounded-sm`}>

@@ -185,8 +185,8 @@ const KegiatanCRUD: React.FC = () => {
   
     try {
       const url = existingNotulen
-        ? `http://localhost:5000/notulen/${existingNotulen.id}`
-        : `http://localhost:5000/notulen/upload`;
+        ? `${import.meta.env.VITE_API_URL}/notulen/${existingNotulen.id}`
+        : `${import.meta.env.VITE_API_URL}/notulen/upload`;
   
       const method = existingNotulen ? 'PUT' : 'POST';
   
@@ -212,7 +212,7 @@ const KegiatanCRUD: React.FC = () => {
     setSelectedKegiatan(item);
     setNotulenFile(null);
     try {
-      const res = await fetch(`http://localhost:5000/notulen/kegiatan/${item.id}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/notulen/kegiatan/${item.id}`);
       if (res.ok) {
         const data = await res.json();
         setExistingNotulen(data);
@@ -434,7 +434,7 @@ const KegiatanCRUD: React.FC = () => {
               <div className="mb-4 text-sm text-gray-600">
                 File saat ini:{" "}
                 <a
-                  href={`http://localhost:5000/uploads/notulen/${existingNotulen.file}`}
+                  href={`${import.meta.env.VITE_API_URL}/uploads/notulen/${existingNotulen.file}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline"

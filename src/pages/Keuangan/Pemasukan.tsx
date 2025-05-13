@@ -32,7 +32,7 @@ export default function PemasukanPengeluaranCRUD() {
         return parseInt(tahunA) - parseInt(tahunB) || idxA - idxB;
       });
       setData(sorted);
-    } catch (err) {
+    } catch {
       setError("Gagal memuat data");
     } finally {
       setLoading(false);
@@ -106,8 +106,14 @@ export default function PemasukanPengeluaranCRUD() {
         month: bulan,
         month_number: monthOrder.indexOf(bulan) + 1 || 0,
         year: parseInt(tahun) || 0,
-        sales: item.tipe === 'pemasukan' ? item.jumlah : item.pemasukan || 0,
-        revenue: item.tipe === 'pengeluaran' ? item.jumlah : item.pengeluaran || 0,
+        sales: filter === 'bulanan'
+          ? item.tipe === 'pemasukan' ? item.jumlah : 0
+          : item.pemasukan || 0,
+        revenue: filter === 'bulanan'
+          ? item.tipe === 'pengeluaran' ? item.jumlah : 0
+          : item.pengeluaran || 0,
+        // sales: item.tipe === 'pemasukan' ? item.jumlah : item.pemasukan || 0,
+        // revenue: item.tipe === 'pengeluaran' ? item.jumlah : item.pengeluaran || 0,
       };
     } else if (filter === 'triwulan') {
       const [quarter, tahun] = item.bulan.split(" ");
@@ -147,7 +153,7 @@ export default function PemasukanPengeluaranCRUD() {
   return (
     <div className="space-y-8">
       <div className="flex justify-end">
-        <select value={filter} onChange={(e) => setFilter(e.target.value as any)} className="rounded px-3 py-1 border">
+        <select value={filter} onChange={(e) => setFilter(e.target.value as 'bulanan' | 'triwulan' | 'tahunan')} className="rounded px-3 py-1 border">
           <option value="bulanan">Bulanan</option>
           <option value="triwulan">Triwulan</option>
           {/* <option value="tahunan">Tahunan</option> */}

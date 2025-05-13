@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useState } from "react";
+import { JSX, useEffect, useState } from "react";
 import {
   GroupIcon,
   PageIcon,

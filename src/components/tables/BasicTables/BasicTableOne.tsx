@@ -4,7 +4,7 @@ import {
   TableCell,
   TableHeader,
   TableRow,
-} from "../../ui/table";
+} from "../../ui/Table";
 
 import Badge from "../../ui/badge/Badge";
 

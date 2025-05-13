@@ -1,9 +1,5 @@
 import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "../../components/ecommerce/StatisticsChart";
-import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
-import DemographicCard from "../../components/ecommerce/DemographicCard";
 import PageMeta from "../../components/common/PageMeta";
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
@@ -96,7 +92,7 @@ export default function Home() {
           <div className="flex justify-end">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
+              onChange={(e) => setFilter(e.target.value as 'bulanan' | 'triwulan' | 'tahunan')}
               className="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
             >
               <option value="bulanan">Bulanan</option>

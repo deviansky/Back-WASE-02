@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Calendar } from "@/components/ui/calendar"
-import PageMeta from "../components/common/PageMeta";
+import PageMeta from "@/components/common/PageMeta";
 
 export function CalendarDemo() {
   const [date, setDate] = React.useState<Date | undefined>(new Date())

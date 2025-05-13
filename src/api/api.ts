@@ -1,5 +1,5 @@
 // src/api/api.ts
-const API_URL = 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Tipe data dasar
 export interface Product {
@@ -110,24 +110,24 @@ export const productApi = {
 // API untuk Penghuni
 export const penghuniApi = {
   getAll: (): Promise<Penghuni[]> => 
-    apiRequest<Penghuni[]>('/penghunis'),
+    apiRequest<Penghuni[]>('/penghuni'),
 
   create: (penghuni: Omit<Penghuni, 'id'>): Promise<Penghuni> => 
-    apiRequest<Penghuni>('/penghunis', {
+    apiRequest<Penghuni>('/penghuni', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(penghuni),
     }),
 
   update: (penghuni: Penghuni): Promise<Penghuni> => 
-    apiRequest<Penghuni>(`/penghunis/${penghuni.id}`, {
+    apiRequest<Penghuni>(`/penghuni/${penghuni.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(penghuni),
     }),
 
   delete: (id: number): Promise<void> => 
-    apiRequest<void>(`/penghunis/${id}`, { method: 'DELETE' }),
+    apiRequest<void>(`/penghuni/${id}`, { method: 'DELETE' }),
 };
 
 // API untuk Statistik
@@ -206,15 +206,15 @@ export const absensiApi = {
   getByKegiatan: (id_kegiatan: number): Promise<AbsensiItem[]> =>
     apiRequest<AbsensiItem[]>(`/absensi/kegiatan/${id_kegiatan}`),
 
-  create: (id_kegiatan: number, absensi_list: { id_penghuni: number; status_kehadiran: string }[]): Promise<any> =>
-    apiRequest<any>('/absensi', {
+  create: (id_kegiatan: number, absensi_list: { id_penghuni: number; status_kehadiran: string }[]): Promise<void> =>
+    apiRequest<void>('/absensi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id_kegiatan, absensi_list }),
     }),
 
-  update: (id: number, status_kehadiran: string): Promise<any> =>
-    apiRequest<any>(`/absensi/${id}`, {
+  update: (id: number, status_kehadiran: string): Promise<AbsensiItem> =>
+    apiRequest<AbsensiItem>(`/absensi/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status_kehadiran }),
@@ -233,15 +233,15 @@ export const notulenApi = {
   getByKegiatan: (id_kegiatan: number): Promise<NotulenItem> =>
     apiRequest<NotulenItem>(`/notulen/kegiatan/${id_kegiatan}`),
 
-  create: (data: { id_kegiatan: number; file: string }): Promise<any> =>
+  create: (data: { id_kegiatan: number; file: string }): Promise<NotulenItem> =>
     apiRequest('/notulen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
 
-  update: (id: number, file: string): Promise<any> =>
-    apiRequest(`/notulen/${id}`, {
+  update: (id: number, file: string): Promise<NotulenItem> =>
+    apiRequest<NotulenItem>(`/notulen/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ file }),
@@ -257,14 +257,14 @@ export const pemasukanApi = {
   getAll: (): Promise<PemasukanItem[]> =>
     apiRequest<PemasukanItem[]>('/pemasukan'),
 
-  create: (data: Omit<PemasukanItem, 'id' | 'created_at' | 'updated_at'>): Promise<any> =>
+  create: (data: Omit<PemasukanItem, 'id' | 'created_at' | 'updated_at'>): Promise<PemasukanItem> =>
     apiRequest('/pemasukan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
 
-  update: (id: number, data: Omit<PemasukanItem, 'id' | 'created_at' | 'updated_at'>): Promise<any> =>
+  update: (id: number, data: Omit<PemasukanItem, 'id' | 'created_at' | 'updated_at'>): Promise<PemasukanItem> =>
     apiRequest(`/pemasukan/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import ChartTab from "../common/ChartTab";
 import { 
   fetchMonthlyStatistics, 
   fetchQuarterlyStatistics, 
   fetchYearlyStatistics
 } from "../../api/api";
+import ChartTab from "./ChartTab ";
 
 
 type ChartPeriod = "monthly" | "quarterly" | "yearly";
@@ -91,7 +91,7 @@ export default function StatisticsChart({
           setMonthlyData(data.map(item => ({ ...item, year })));
         } else if (period === "quarterly") {
           const data = await fetchQuarterlyStatistics(year);
-          setQuarterlyData(data);
+          setQuarterlyData(data.map(item => ({ ...item, year: item.year ?? year })));
         } else if (period === "yearly") {
           const data = await fetchYearlyStatistics();
           setYearlyData(data);
@@ -172,7 +172,6 @@ export default function StatisticsChart({
       },
       animations: {
         enabled: true,
-        easing: 'easeinout',
         speed: 800,
         animateGradually: {
           enabled: true,
@@ -287,11 +286,11 @@ export default function StatisticsChart({
         
         <div className="flex items-center space-x-4 mt-4 md:mt-0">
           {/* Period selector */}
-          {/* <ChartTab 
+          <ChartTab 
             tabs={periodTabs} 
             activeTab={period}
             onChange={(tab) => handlePeriodChange(tab as ChartPeriod)} 
-          /> */}
+          />
           
           {/* Year selector (not shown for yearly period) */}
           {period !== "yearly" && (

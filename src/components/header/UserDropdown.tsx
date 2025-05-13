@@ -1,15 +1,11 @@
 import { useState, useEffect } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { Link, useNavigate } from "react-router";
-
-interface UserDropdownProps {
-  name?: string;
-  role?: string;
-}
+import { useNavigate } from "react-router";
 
 
-export default function UserDropdown({}) {
+
+export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<{ name?: string; email?: string } | null>(null);
   const navigate = useNavigate();
