@@ -19,11 +19,12 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Kegiatan from "./pages/Kegiatana/kegiatan";
-import Pemasukan from "./pages/Keuangan/Pemasukan"
+import Pemasukan from "./pages/Keuangan/Pemasukan";
 import Products from "./pages/tesAPI";
 import PenghuniCRUD from "./pages/Penghuni";
 import AdminRoute from "./components/routes/AdminRoute";
-
+import User from "./components/header/SigOut";
+import LoginUser from "./components/header/Login";
 export default function App() {
   return (
     <>
@@ -34,6 +35,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
             <Route index path="/product" element={<Products />} />
+            {/* <Route index path="/login" element={<LoginUser />} /> */}
             <Route
               path="/penghuni"
               element={
@@ -44,10 +46,11 @@ export default function App() {
             />
 
             {/* Others Page */}
+            <Route path="/user" element={<User />} />
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/blank" element={<Blank />} />
-            
+
             {/* Keuangan */}
             <Route
               path="/Pemasukan"
@@ -59,14 +62,7 @@ export default function App() {
             />
 
             {/* Kegiatan */}
-            <Route
-              path="/kegiatan"
-              element={
-                <AdminRoute>
-                  <Kegiatan />
-                </AdminRoute>
-              }
-            />
+            <Route path="/kegiatan" element={<Kegiatan />} />
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />

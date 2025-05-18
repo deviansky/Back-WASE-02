@@ -121,7 +121,6 @@ export default function SignInForm() {
               <Checkbox checked={isChecked} onChange={setIsChecked} />
               <span className="text-sm text-gray-700 dark:text-gray-400">Keep me logged in</span>
             </div>
-            <a href="/reset-password" className="text-sm text-brand-500 hover:underline">Forgot password?</a>
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>

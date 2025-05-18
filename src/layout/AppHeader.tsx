@@ -3,7 +3,7 @@ import { Link } from "react-router";
 
 import { useSidebar } from "../context/SidebarContext";
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
-import UserDropdown from "../components/header/UserDropdown";
+import LoginUser from "../components/header/Login";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -132,7 +132,7 @@ const AppHeader: React.FC = () => {
             {/* <!-- Notification Menu Area --> */}
           </div>
           {/* <!-- User Area --> */}
-          <UserDropdown />
+          <LoginUser />
         </div>
       </div>
     </header>

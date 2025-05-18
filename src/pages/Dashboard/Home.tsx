@@ -117,7 +117,9 @@ export default function Home() {
             className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6"
           />,
         </div>
-        <Kegiatan />
+        <div className="col-span-12">
+          <Kegiatan />
+        </div>
       </div>
     </>
   );
