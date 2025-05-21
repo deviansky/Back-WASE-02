@@ -110,23 +110,23 @@ export const productApi = {
 
 // API untuk Penghuni
 export const penghuniApi = {
-  getAll: (): Promise<Penghuni[]> => apiRequest<Penghuni[]>("/penghuni"),
+  getAll: (): Promise<Penghuni[]> => apiRequest<Penghuni[]>("/penghunis"),
 
   create: (penghuni: Omit<Penghuni, "id">): Promise<Penghuni> =>
-    apiRequest<Penghuni>("/penghuni", {
+    apiRequest<Penghuni>("/penghunis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(penghuni),
     }),
 
   update: (penghuni: Penghuni): Promise<Penghuni> =>
-    apiRequest<Penghuni>(`/penghuni/${penghuni.id}`, {
+    apiRequest<Penghuni>(`/penghunis/${penghuni.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(penghuni),
     }),
 
-  delete: (id: number): Promise<void> => apiRequest<void>(`/penghuni/${id}`, { method: "DELETE" }),
+  delete: (id: number): Promise<void> => apiRequest<void>(`/penghunis/${id}`, { method: "DELETE" }),
 }
 
 // API untuk Statistik

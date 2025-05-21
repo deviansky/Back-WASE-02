@@ -24,7 +24,6 @@ import Products from "./pages/tesAPI";
 import PenghuniCRUD from "./pages/Penghuni";
 import AdminRoute from "./components/routes/AdminRoute";
 import User from "./components/header/SigOut";
-import LoginUser from "./components/header/Login";
 export default function App() {
   return (
     <>
