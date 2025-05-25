@@ -52,13 +52,15 @@ export interface Kegiatan {
   updated_at?: string
 }
 
+// Interface untuk Absensi
 export interface AbsensiItem {
-  id?: number
-  id_kegiatan: number
-  id_penghuni: number
-  status_kehadiran: "Hadir" | "Sakit" | "Izin" | "Alpha"
-  created_at?: string
-  updated_at?: string
+  id?: number;
+  id_kegiatan: number;
+  id_penghuni: number;
+  status_kehadiran: string;
+  nama_penghuni?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface NotulenItem {
@@ -194,29 +196,27 @@ export const kegiatanApi = {
   delete: (id: number): Promise<void> => apiRequest<void>(`/kegiatan/${id}`, { method: "DELETE" }),
 }
 
-// API untuk Absensi
+// Absensi API
 export const absensiApi = {
-  getAll: (): Promise<AbsensiItem[]> => apiRequest<AbsensiItem[]>("/absensi"),
+  // GET - Ambil absensi berdasarkan kegiatan
+  getByKegiatan: async (id_kegiatan: number): Promise<AbsensiItem[]> => {
+    return await apiRequest(`/api/absensi/kegiatan/${id_kegiatan}`, {
+      method: 'GET'
+    });
+  },
 
-  getByKegiatan: (id_kegiatan: number): Promise<AbsensiItem[]> =>
-    apiRequest<AbsensiItem[]>(`/absensi/kegiatan/${id_kegiatan}`),
+  // POST - Simpan absensi
+  create: async (id_kegiatan: number, absensi_list: Array<{id_penghuni: number, status_kehadiran: string}>): Promise<any> => {
+    return await apiRequest(`/api/absensi/${id_kegiatan}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ absensi_list })
+    });
+  }
+};
 
-  create: (id_kegiatan: number, absensi_list: { id_penghuni: number; status_kehadiran: string }[]): Promise<void> =>
-    apiRequest<void>("/absensi", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_kegiatan, absensi_list }),
-    }),
-
-  update: (id: number, status_kehadiran: string): Promise<AbsensiItem> =>
-    apiRequest<AbsensiItem>(`/absensi/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status_kehadiran }),
-    }),
-
-  delete: (id: number): Promise<void> => apiRequest<void>(`/absensi/${id}`, { method: "DELETE" }),
-}
 
 // API untuk Notulen
 export const notulenApi = {
@@ -226,7 +226,7 @@ export const notulenApi = {
     apiRequest<NotulenItem>(`/notulen/kegiatan/${id_kegiatan}`),
 
   create: (data: { id_kegiatan: number; file: string }): Promise<NotulenItem> =>
-    apiRequest("/notulen", {
+    apiRequest("/notulen/upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
@@ -303,19 +303,8 @@ export const saveQuarterlyStatistic = statisticsApi.quarterly.save
 export const saveYearlyStatistic = statisticsApi.yearly.save
 export const deleteMonthlyStatistic = statisticsApi.monthly.delete
 
-export const fetchAbsensi = absensiApi.getAll
-export const fetchAbsensiByKegiatan = absensiApi.getByKegiatan
-export const createAbsensi = (payload: {
-  id_kegiatan: number
-  absensi_list: { id_penghuni: number; status_kehadiran: string }[]
-}): Promise<void> =>
-  apiRequest<void>("/absensi", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  })
-export const updateAbsensi = absensiApi.update
-export const deleteAbsensi = absensiApi.delete
+export const fetchAbsensiByKegiatan = absensiApi.getByKegiatan;
+export const createAbsensi = absensiApi.create;
 
 export const fetchNotulen = notulenApi.getAll
 export const fetchNotulenByKegiatan = notulenApi.getByKegiatan

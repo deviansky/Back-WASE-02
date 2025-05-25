@@ -34,7 +34,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
             <Route index path="/product" element={<Products />} />
-            {/* <Route index path="/login" element={<LoginUser />} /> */}
+            
             <Route
               path="/penghuni"
               element={
@@ -43,12 +43,6 @@ export default function App() {
                 </AdminRoute>
               }
             />
-
-            {/* Others Page */}
-            <Route path="/user" element={<User />} />
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
 
             {/* Keuangan */}
             <Route
@@ -61,7 +55,21 @@ export default function App() {
             />
 
             {/* Kegiatan */}
-            <Route path="/kegiatan" element={<Kegiatan />} />
+            <Route
+              path="/kegiatan"
+              element={
+                <AdminRoute>
+                  <Kegiatan />
+                </AdminRoute>
+              }
+            />
+            
+
+            {/* Others Page */}
+            <Route path="/user" element={<User />} />
+            <Route path="/profile" element={<UserProfiles />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/blank" element={<Blank />} />
 
             {/* Forms */}
             <Route path="/form-elements" element={<FormElements />} />
@@ -83,7 +91,7 @@ export default function App() {
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
+          <Route path="/login" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
 
           {/* Fallback Route */}

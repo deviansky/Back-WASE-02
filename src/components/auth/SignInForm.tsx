@@ -43,6 +43,12 @@ export default function SignInForm() {
       }
   
       const data = await response.json();
+      // Simpan ke localStorage (pastikan data.role ada)
+      localStorage.setItem("user", JSON.stringify({
+        name: data.name,
+        email: data.email,
+        role: data.role, // ✅ ini penting
+      }));
       console.log("Login successful, received data:", { token: data.token ? "exists" : "missing", user: data.user ? "exists" : "missing" });
   
       // Simpan token & user ke localStorage

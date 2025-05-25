@@ -8,12 +8,14 @@ import {
   Kegiatan,
   Penghuni,
   absensiApi,
-  NotulenItem
+  notulenApi
 } from '../../api/api';
 
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiArrowLeft, FiUsers } from 'react-icons/fi';
+
+// Interface NotulenItem sudah ada di notulenApi, tidak perlu didefinisikan ulang
 
 const KegiatanCRUD: React.FC = () => {
   const [kegiatan, setKegiatan] = useState<Kegiatan[]>([]);
@@ -28,16 +30,17 @@ const KegiatanCRUD: React.FC = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [isAbsensiModalOpen, setIsAbsensiModalOpen] = useState(false);
+  // State untuk halaman absensi
+  const [currentView, setCurrentView] = useState<'list' | 'absensi'>('list');
   const [selectedKegiatan, setSelectedKegiatan] = useState<Kegiatan | null>(null);
   const [absensiData, setAbsensiData] = useState<{ [penghuniId: number]: string }>({});
   const [penghunis, setPenghunis] = useState<Penghuni[]>([]);
+  const [absensiLoading, setAbsensiLoading] = useState(false);
 
-  const [isNotulenModalOpen, setIsNotulenModalOpen] = useState(false);
+  // State untuk notulen - DIPERBAIKI: Tambahkan state yang hilang
   const [notulenFile, setNotulenFile] = useState<File | null>(null);
-  const [existingNotulen, setExistingNotulen] = useState<NotulenItem | null>(null);
-
-
+  const [existingNotulen, setExistingNotulen] = useState<any>(null); // Menggunakan any karena tipe sudah didefinisikan di notulenApi
+  const [isNotulenModalOpen, setIsNotulenModalOpen] = useState(false); // MISSING STATE!
 
   useEffect(() => {
     setIsFormValid(
@@ -48,13 +51,17 @@ const KegiatanCRUD: React.FC = () => {
     );
   }, [judul, deskripsi, tanggal, waktuAcara]);
 
+  // Load penghuni saat komponen dimount
   useEffect(() => {
     const loadPenghunis = async () => {
       try {
+        console.log('🔄 Memuat data penghuni...');
         const data = await fetchPenghuni();
+        console.log('✅ Data penghuni berhasil dimuat:', data);
         setPenghunis(data);
       } catch (err) {
-        console.error('Gagal memuat data penghuni:', err);
+        console.error('❌ Gagal memuat data penghuni:', err);
+        setError('Gagal memuat data penghuni');
       }
     };
     loadPenghunis();
@@ -137,145 +144,341 @@ const KegiatanCRUD: React.FC = () => {
     setWaktuAcara(null);
   };  
 
-  const openAbsensiModal = async (item: Kegiatan) => {
+  const openAbsensiPage = async (item: Kegiatan) => {
     try {
+      setAbsensiLoading(true);
       setSelectedKegiatan(item);
+
+      let penghuniData = penghunis;
+      if (penghunis.length === 0) {
+        penghuniData = await fetchPenghuni();
+        setPenghunis(penghuniData);
+      }
+
       const data = await absensiApi.getByKegiatan(item.id);
-      const initialAbsensi = Object.fromEntries(
-        data.map(d => [d.id_penghuni, d.status_kehadiran])
-      );
+
+      const initialAbsensi: { [penghuniId: number]: string } = {};
+      penghuniData.forEach(penghuni => {
+        if (penghuni.id) initialAbsensi[penghuni.id] = 'Tidak Hadir';
+      });
+
+      data.forEach(d => {
+        if (d.id_penghuni) {
+          initialAbsensi[d.id_penghuni] = d.status_kehadiran === 'Hadir' ? 'Hadir' : 'Tidak Hadir';
+        }
+      });
+
       setAbsensiData(initialAbsensi);
-      setIsAbsensiModalOpen(true);
+      setCurrentView('absensi');
     } catch (error) {
       console.error('❌ Gagal memuat absensi:', error);
-      alert('Gagal memuat absensi');
+      alert('Gagal memuat data absensi. Silakan coba lagi.');
+    } finally {
+      setAbsensiLoading(false);
     }
-  };
-  
-  // Fungsi untuk submit absensi
+  };  
+
+  // Fungsi untuk submit absensi (diperbaiki)
   const handleAbsensiSubmit = async () => {
-    if (!selectedKegiatan) return;
-  
-    const absensiList = Object.entries(absensiData).map(
-      ([id_penghuni, status_kehadiran]) => ({
-        id_penghuni: parseInt(id_penghuni),
-        status_kehadiran,
-      })
-    );
-  
+    if (!selectedKegiatan) {
+      alert('Kegiatan tidak dipilih');
+      return;
+    }
+
     try {
+      setAbsensiLoading(true);
+      
+      // Konversi absensi data ke format yang dibutuhkan API
+      const absensiList = Object.entries(absensiData)
+        .filter(([penghuniId, status]) => penghuniId && status) // Filter data yang valid
+        .map(([penghuniId, status]) => ({
+          id_penghuni: parseInt(penghuniId),
+          status_kehadiran: status,
+        }));
+
+      console.log('📤 Mengirim data absensi:', {
+        kegiatanId: selectedKegiatan.id,
+        absensiList
+      });
+
       await absensiApi.create(selectedKegiatan.id, absensiList);
+      
       alert('✅ Absensi berhasil disimpan!');
-      setIsAbsensiModalOpen(false);
+      setCurrentView('list'); // Kembali ke halaman list
+      
     } catch (error) {
       console.error('❌ Gagal menyimpan absensi:', error);
-      alert('Gagal menyimpan absensi');
+      alert('Gagal menyimpan absensi. Silakan coba lagi.');
+    } finally {
+      setAbsensiLoading(false);
     }
   };
-  
+
+  // Fungsi untuk kembali ke halaman list
+  const backToList = () => {
+    setCurrentView('list');
+    setSelectedKegiatan(null);
+    setAbsensiData({});
+  };
+
+  // DIPERBAIKI: Fungsi upload notulen dengan error handling yang lebih baik
   const handleNotulenUpload = async () => {
     if (!selectedKegiatan || !notulenFile) {
       alert("Pilih file dan kegiatan terlebih dahulu.");
       return;
     }
   
-    const formData = new FormData();
-    formData.append('id_kegiatan', selectedKegiatan.id.toString());
-    formData.append('file', notulenFile);
-  
-    try {
-      const url = existingNotulen
-        ? `${import.meta.env.VITE_API_URL}/notulen/${existingNotulen.id}`
-        : `${import.meta.env.VITE_API_URL}/notulen/upload`;
-  
-      const method = existingNotulen ? 'PUT' : 'POST';
-  
-      const response = await fetch(url, {
-        method,
-        body: formData,
+    // Konversi file ke base64 string
+    const toBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
       });
-  
-      if (!response.ok) throw new Error('Upload gagal');
-  
-      alert("✅ Notulen berhasil diupload");
+    };
+
+    try {
+      const base64File = await toBase64(notulenFile);
+
+      if (existingNotulen) {
+        await notulenApi.update(existingNotulen.id, base64File);
+        alert("Notulen berhasil diperbarui!");
+      } else {
+        await notulenApi.create({
+          id_kegiatan: selectedKegiatan.id,
+          file: base64File,
+        });
+        alert("Notulen berhasil diunggah!");
+      }
+
+      // Reset state dan tutup modal
       setIsNotulenModalOpen(false);
       setNotulenFile(null);
       setExistingNotulen(null);
+      
     } catch (error) {
-      console.error("❌ Upload gagal:", error);
-      alert("Gagal upload notulen.");
+      console.error("Upload notulen gagal:", error);
+      alert("Upload gagal. Silakan coba lagi.");
     }
   };
-  
 
+  // DIPERBAIKI: Fungsi untuk membuka modal notulen dengan error handling
   const openNotulenModal = async (item: Kegiatan) => {
     setSelectedKegiatan(item);
     setNotulenFile(null);
+    
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/notulen/kegiatan/${item.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        setExistingNotulen(data);
+      // Coba gunakan notulenApi jika tersedia, jika tidak gunakan fetch manual
+      let notulenData = null;
+      
+      if (notulenApi && notulenApi.getByKegiatan) {
+        notulenData = await notulenApi.getByKegiatan(item.id);
       } else {
-        setExistingNotulen(null);
+        // Fallback ke fetch manual
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/notulen/kegiatan/${item.id}`);
+        if (res.ok) {
+          notulenData = await res.json();
+        }
       }
+      
+      setExistingNotulen(notulenData);
     } catch (error) {
       console.error("Gagal memuat notulen:", error);
       setExistingNotulen(null);
     }
+    
     setIsNotulenModalOpen(true);
   };
-  
-  
-  
 
+  // DIPERBAIKI: Fungsi untuk menutup modal notulen
+  const closeNotulenModal = () => {
+    setIsNotulenModalOpen(false);
+    setSelectedKegiatan(null);
+    setNotulenFile(null);
+    setExistingNotulen(null);
+  };
 
+  // Render halaman absensi
+  if (currentView === 'absensi') {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex mb-6">
+          <h1 className="text-2xl font-bold">
+            Absensi Kegiatan
+          </h1>
+        </div>
+
+        {absensiLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+        ) : (
+          <>
+            {selectedKegiatan && (
+              <div className="bg-gray-50 p-3 rounded-lg mb-6">
+                <h2 className="font-semibold">Kegiatan: <p className="text-ml text-gray-500">{selectedKegiatan.judul}</p></h2>
+                <p className="text-sm text-gray-500">
+                  📅 {new Date(selectedKegiatan.tanggal).toLocaleDateString('id-ID')}
+                </p>
+                <p className="text-sm text-gray-500">
+                  ⏰ {selectedKegiatan.waktu_acara.slice(0, 5)}
+                </p>
+              </div>
+            )}
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-4 border-b">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <FiUsers />
+                  Daftar Kehadiran ({penghunis.length} orang)
+                </h3>
+              </div>
+              
+              <div className="p-4">
+                {penghunis.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    Tidak ada data penghuni ditemukan
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {penghunis.map((penghuni, index) => (
+                      <div 
+                        key={penghuni.id || index} 
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium">{penghuni.nama}</h4>
+                          <p className="text-sm text-gray-500">
+                            Angkatan: {penghuni.angkatan}
+                          </p>
+                        </div>
+                        
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`absensi-${penghuni.id}`}
+                              value="Hadir"
+                              checked={absensiData[penghuni.id!] === 'Hadir'}
+                              onChange={() => {
+                                if (penghuni.id) {
+                                  setAbsensiData(prev => ({
+                                    ...prev,
+                                    [penghuni.id!]: 'Hadir',
+                                  }));
+                                }
+                              }}
+                              className="text-green-600"
+                            />
+                            <span className="text-green-600 font-medium">Hadir</span>
+                          </label>
+                          
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`absensi-${penghuni.id}`}
+                              value="Tidak Hadir"
+                              checked={absensiData[penghuni.id!] === 'Tidak Hadir'}
+                              onChange={() => {
+                                if (penghuni.id) {
+                                  setAbsensiData(prev => ({
+                                    ...prev,
+                                    [penghuni.id!]: 'Tidak Hadir',
+                                  }));
+                                }
+                              }}
+                              className="text-red-600"
+                            />
+                            <span className="text-red-600 font-medium">Tidak Hadir</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={backToList}
+                className="bg-gray-300 hover:bg-gray-400 px-6 py-2 rounded"
+                disabled={absensiLoading}
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleAbsensiSubmit}
+                disabled={absensiLoading || penghunis.length === 0}
+                className={`px-6 py-2 rounded ${
+                  absensiLoading || penghunis.length === 0
+                    ? 'bg-white cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                } text-white`}
+              >
+                {absensiLoading ? 'Menyimpan...' : 'Simpan Absensi'}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Render halaman utama (list kegiatan)
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Daftar Kegiatan</h1>
         <button
           onClick={() => openModal()}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 w-full sm:w-auto justify-center"
         >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+        </svg>
           Tambah Kegiatan
         </button>
       </div>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       {loading ? (
-        <p>Memuat data...</p>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
       ) : (
         <div className="space-y-4">
           {kegiatan.map(item => (
-            <div key={item.id} className="border p-4 rounded shadow">
+            <div key={item.id} className="border p-4 rounded shadow bg-white">
               <h2 className="text-lg font-semibold">{item.judul}</h2>
-              <p>{item.deskripsi}</p>
-              <p className="text-sm text-gray-500">
-                {item.tanggal} - {item.waktu_acara}
+              <p className="text-gray-700 mb-1">{item.deskripsi}</p>
+              <p className="text-sm text-gray-500 mb-3">
+                📅 {new Date(item.tanggal).toLocaleDateString('id-ID')} - ⏰ {item.waktu_acara.slice(0, 5)}
               </p>
-              <div className="flex justify-between items-center mt-3">
-                {/* Kiri: Absensi dan Notulen */}
+              
+              <div className="flex justify-between items-center">
                 <div className="flex gap-2">
-                <button
-                  onClick={() => openAbsensiModal(item)}
-                  className="bg-green-500 text-white px-3 py-1 rounded"
-                >
-                  Absensi
-                </button>
+                  <button
+                    onClick={() => openAbsensiPage(item)}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded flex items-center gap-1"
+                  >
+                    <FiUsers size={16} />
+                    Absensi
+                  </button>
 
-                <button
+                  <button
                     onClick={() => openNotulenModal(item)}
-                    className="bg-purple-500 text-white px-3 py-1 rounded"
+                    className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded"
                   >
                     Upload Notulen
                   </button>
-
-
                 </div>
 
-                {/* Kanan: Tombol ikon */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => openModal(item)}
@@ -297,14 +500,12 @@ const KegiatanCRUD: React.FC = () => {
                   </button>
                 </div>
               </div>
-
-
-
             </div>
           ))}
         </div>
       )}
 
+      {/* Modal Form Kegiatan */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
           <form
@@ -348,8 +549,6 @@ const KegiatanCRUD: React.FC = () => {
               className="w-full mb-4 p-2 border rounded"
             />
 
-
-
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -372,112 +571,64 @@ const KegiatanCRUD: React.FC = () => {
         </div>
       )}
 
-      {isAbsensiModalOpen && selectedKegiatan && (
-        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Absensi - {selectedKegiatan.judul}
-            </h2>
-
-            {penghunis.map(p => (
-              <div key={p.id} className="mb-4">
-                <label className="block mb-1">{p.nama}</label>
-                <div className="flex flex-row gap-4">
-                  {["Hadir", "Sakit", "Izin", "Alpha"].map(status => (
-                    <label key={status} className="inline-flex items-center">
-                      <input
-                        type="radio"
-                        name={`status-${p.id}`}
-                        value={status}
-                        checked={absensiData[p.id!] === status}
-                        onChange={() =>
-                          setAbsensiData(prev => ({
-                            ...prev,
-                            [p.id!]: status,
-                          }))
-                        }
-                        className="mr-1"
-                      />
-                      {status}
-                    </label>
-                  ))}
-                </div>
-
-              </div>
-            ))}
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setIsAbsensiModalOpen(false)}
-                className="bg-gray-300 px-4 py-2 rounded"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleAbsensiSubmit}
-                className="bg-green-600 text-white px-4 py-2 rounded"
-              >
-                Simpan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Modal Upload Notulen - DIPERBAIKI */}
       {isNotulenModalOpen && selectedKegiatan && (
         <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
           <div className="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 className="text-xl font-semibold mb-4">
               Upload Notulen - {selectedKegiatan.judul}
             </h2>
+            
             {existingNotulen && (
-              <div className="mb-4 text-sm text-gray-600">
-                File saat ini:{" "}
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                <p className="text-sm text-blue-800 mb-2">File saat ini:</p>
                 <a
                   href={`${import.meta.env.VITE_API_URL}/uploads/notulen/${existingNotulen.file}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline"
+                  className="text-blue-600 underline text-sm break-all"
                 >
                   {existingNotulen.file}
                 </a>
               </div>
             )}
 
-
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={e => setNotulenFile(e.target.files?.[0] || null)}
-              className="w-full mb-4 p-2 border rounded"
-            />
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">
+                Pilih File (.pdf, .doc, .docx)
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={e => setNotulenFile(e.target.files?.[0] || null)}
+                className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
 
             <div className="flex justify-end gap-2">
               <button
-                onClick={() => setIsNotulenModalOpen(false)}
-                className="bg-gray-300 px-4 py-2 rounded"
+                onClick={closeNotulenModal}
+                className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleNotulenUpload}
-                className="bg-purple-600 text-white px-4 py-2 rounded"
+                disabled={!notulenFile}
+                className={`px-4 py-2 rounded transition-colors ${
+                  notulenFile 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                Upload
+                {existingNotulen ? 'Update' : 'Upload'}
               </button>
             </div>
           </div>
         </div>
       )}
-
-
-
-
     </div>
   );
 };
-
-
-
 
 export default KegiatanCRUD;

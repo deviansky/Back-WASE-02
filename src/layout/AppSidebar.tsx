@@ -88,7 +88,7 @@ export function UserDropdown() {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     closeDropdown();
-    navigate("/signin");
+    navigate("/login");
   }
   
   // Return the JSX for the UserDropdown component
