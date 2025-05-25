@@ -67,19 +67,6 @@ export default function EcommerceMetrics() {
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
-        <label className="mr-2 text-sm text-gray-700 dark:text-gray-300">Tahun:</label>
-        <select
-          value={tahun}
-          onChange={(e) => setTahun(parseInt(e.target.value))}
-          className="rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
-        >
-          {availableYears.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
-
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-6">
         {/* Total Penghuni */}
         <MetricBox icon={<GroupIcon />} label="Penghuni" value={totalPenghuni} />

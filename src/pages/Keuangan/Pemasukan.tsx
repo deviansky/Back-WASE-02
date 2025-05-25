@@ -186,18 +186,6 @@ export default function PemasukanPengeluaranCRUD() {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-end">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as "bulanan" | "triwulan" | "tahunan")}
-          className="rounded px-3 py-1 border"
-        >
-          <option value="bulanan">Bulanan</option>
-          <option value="triwulan">Triwulan</option>
-          {/* <option value="tahunan">Tahunan</option> */}
-        </select>
-      </div>
-
       <StatisticsChart
         externalMonthlyData={chartData}
         externalQuarterlyData={[]}

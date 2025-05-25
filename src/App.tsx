@@ -24,6 +24,9 @@ import Products from "./pages/tesAPI";
 import PenghuniCRUD from "./pages/Penghuni";
 import AdminRoute from "./components/routes/AdminRoute";
 import User from "./components/header/SigOut";
+import DashboardView from "./pages/TampilanPenghuni/DashboardView"
+import KegiatanView from "./pages/TampilanPenghuni/KegiatanView"
+import PenghuniView from "./pages/TampilanPenghuni/PenghuniView"
 export default function App() {
   return (
     <>
@@ -32,9 +35,15 @@ export default function App() {
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
             <Route index path="/product" element={<Products />} />
-            
+                        <Route
+              path="/home"
+              element={
+                <AdminRoute>
+                  <Home />
+                </AdminRoute>
+              }
+            />
             <Route
               path="/penghuni"
               element={
@@ -63,7 +72,12 @@ export default function App() {
                 </AdminRoute>
               }
             />
-            
+
+
+            {/* Penghuni View */}
+            <Route path="/" element={<DashboardView />} />
+            <Route path="/Kegiatan." element={<KegiatanView />} />
+            <Route path="/Penghuni." element={<PenghuniView />} />
 
             {/* Others Page */}
             <Route path="/user" element={<User />} />
