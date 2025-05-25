@@ -64,11 +64,6 @@ const PenghuniTable: React.FC<PenghuniTableProps> = ({ penghunis, onEdit, onDele
                 <TableRow key={penghuni.id}>
                   <TableCell className="px-5 py-4 sm:px-6 text-start">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 overflow-hidden rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-600 font-medium text-lg">
-                          {penghuni.nama.charAt(0)}
-                        </span>
-                      </div>
                       <div>
                         <span className="block font-medium text-gray-800 text-sm dark:text-white/90">
                           {penghuni.nama}

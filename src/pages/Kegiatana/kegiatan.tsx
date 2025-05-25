@@ -360,8 +360,11 @@ const KegiatanCRUD: React.FC = () => {
                   onChange={e => setNotulenFile(e.target.files?.[0] || null)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
-                <p className="text-sm text-gray-500 mt-2">
-                  Format yang didukung: PDF, DOC, DOCX
+                <p className="text-sm text-red-500 mt-2">
+                  Max File: 5Mb
+                </p>
+                <p className="text-sm text-gray-500">
+                  Format yang didukung: PDF
                 </p>
               </div>
 
