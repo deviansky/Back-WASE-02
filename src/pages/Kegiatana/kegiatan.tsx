@@ -15,8 +15,6 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { FiEdit2, FiTrash2, FiArrowLeft, FiUsers } from 'react-icons/fi';
 
-// Interface NotulenItem sudah ada di notulenApi, tidak perlu didefinisikan ulang
-
 const KegiatanCRUD: React.FC = () => {
   const [kegiatan, setKegiatan] = useState<Kegiatan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,19 +26,17 @@ const KegiatanCRUD: React.FC = () => {
   const [waktuAcara, setWaktuAcara] = useState<Date | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isFormValid, setIsFormValid] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // State untuk halaman absensi
-  const [currentView, setCurrentView] = useState<'list' | 'absensi'>('list');
+  // State untuk halaman - ditambahkan 'form' dan 'notulen' sebagai opsi baru
+  const [currentView, setCurrentView] = useState<'list' | 'absensi' | 'form' | 'notulen'>('list');
   const [selectedKegiatan, setSelectedKegiatan] = useState<Kegiatan | null>(null);
   const [absensiData, setAbsensiData] = useState<{ [penghuniId: number]: string }>({});
   const [penghunis, setPenghunis] = useState<Penghuni[]>([]);
   const [absensiLoading, setAbsensiLoading] = useState(false);
 
-  // State untuk notulen - DIPERBAIKI: Tambahkan state yang hilang
+  // State untuk notulen
   const [notulenFile, setNotulenFile] = useState<File | null>(null);
-  const [existingNotulen, setExistingNotulen] = useState<any>(null); // Menggunakan any karena tipe sudah didefinisikan di notulenApi
-  const [isNotulenModalOpen, setIsNotulenModalOpen] = useState(false); // MISSING STATE!
+  const [existingNotulen, setExistingNotulen] = useState<any>(null);
 
   useEffect(() => {
     setIsFormValid(
@@ -103,7 +99,7 @@ const KegiatanCRUD: React.FC = () => {
       }
 
       await loadKegiatan();
-      closeModal();
+      closeForm();
     } catch (err) {
       console.error('Error submitting form:', err);
     }
@@ -118,7 +114,8 @@ const KegiatanCRUD: React.FC = () => {
     }
   };
 
-  const openModal = (item: Kegiatan | null = null) => {
+  // Fungsi untuk membuka halaman form
+  const openForm = (item: Kegiatan | null = null) => {
     if (item) {
       setEditingId(item.id);
       setJudul(item.judul);
@@ -132,17 +129,18 @@ const KegiatanCRUD: React.FC = () => {
       setTanggal(null);       
       setWaktuAcara(null);   
     }    
-    setIsModalOpen(true);
+    setCurrentView('form');
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  // Fungsi untuk menutup halaman form dan kembali ke list
+  const closeForm = () => {
+    setCurrentView('list');
     setEditingId(null);
     setJudul('');
     setDeskripsi('');
     setTanggal(null);
     setWaktuAcara(null);
-  };  
+  };
 
   const openAbsensiPage = async (item: Kegiatan) => {
     try {
@@ -178,7 +176,7 @@ const KegiatanCRUD: React.FC = () => {
     }
   };  
 
-  // Fungsi untuk submit absensi (diperbaiki)
+  // Fungsi untuk submit absensi
   const handleAbsensiSubmit = async () => {
     if (!selectedKegiatan) {
       alert('Kegiatan tidak dipilih');
@@ -188,9 +186,8 @@ const KegiatanCRUD: React.FC = () => {
     try {
       setAbsensiLoading(true);
       
-      // Konversi absensi data ke format yang dibutuhkan API
       const absensiList = Object.entries(absensiData)
-        .filter(([penghuniId, status]) => penghuniId && status) // Filter data yang valid
+        .filter(([penghuniId, status]) => penghuniId && status)
         .map(([penghuniId, status]) => ({
           id_penghuni: parseInt(penghuniId),
           status_kehadiran: status,
@@ -204,7 +201,7 @@ const KegiatanCRUD: React.FC = () => {
       await absensiApi.create(selectedKegiatan.id, absensiList);
       
       alert('✅ Absensi berhasil disimpan!');
-      setCurrentView('list'); // Kembali ke halaman list
+      setCurrentView('list');
       
     } catch (error) {
       console.error('❌ Gagal menyimpan absensi:', error);
@@ -221,14 +218,13 @@ const KegiatanCRUD: React.FC = () => {
     setAbsensiData({});
   };
 
-  // DIPERBAIKI: Fungsi upload notulen dengan error handling yang lebih baik
+  // Fungsi upload notulen
   const handleNotulenUpload = async () => {
     if (!selectedKegiatan || !notulenFile) {
       alert("Pilih file dan kegiatan terlebih dahulu.");
       return;
     }
   
-    // Konversi file ke base64 string
     const toBase64 = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -252,10 +248,10 @@ const KegiatanCRUD: React.FC = () => {
         alert("Notulen berhasil diunggah!");
       }
 
-      // Reset state dan tutup modal
-      setIsNotulenModalOpen(false);
+      setCurrentView('list');
       setNotulenFile(null);
       setExistingNotulen(null);
+      setSelectedKegiatan(null);
       
     } catch (error) {
       console.error("Upload notulen gagal:", error);
@@ -263,19 +259,17 @@ const KegiatanCRUD: React.FC = () => {
     }
   };
 
-  // DIPERBAIKI: Fungsi untuk membuka modal notulen dengan error handling
-  const openNotulenModal = async (item: Kegiatan) => {
+  // Fungsi untuk membuka halaman notulen
+  const openNotulenPage = async (item: Kegiatan) => {
     setSelectedKegiatan(item);
     setNotulenFile(null);
     
     try {
-      // Coba gunakan notulenApi jika tersedia, jika tidak gunakan fetch manual
       let notulenData = null;
       
       if (notulenApi && notulenApi.getByKegiatan) {
         notulenData = await notulenApi.getByKegiatan(item.id);
       } else {
-        // Fallback ke fetch manual
         const res = await fetch(`${import.meta.env.VITE_API_URL}/notulen/kegiatan/${item.id}`);
         if (res.ok) {
           notulenData = await res.json();
@@ -288,22 +282,232 @@ const KegiatanCRUD: React.FC = () => {
       setExistingNotulen(null);
     }
     
-    setIsNotulenModalOpen(true);
+    setCurrentView('notulen');
   };
 
-  // DIPERBAIKI: Fungsi untuk menutup modal notulen
-  const closeNotulenModal = () => {
-    setIsNotulenModalOpen(false);
+  // Fungsi untuk menutup halaman notulen
+  const closeNotulenPage = () => {
+    setCurrentView('list');
     setSelectedKegiatan(null);
     setNotulenFile(null);
     setExistingNotulen(null);
   };
 
-  // Render halaman absensi
+  // RENDER HALAMAN NOTULEN
+  if (currentView === 'notulen') {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={closeNotulenPage}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mr-4"
+          >
+            <FiArrowLeft size={20} />
+            Kembali
+          </button>
+          <h1 className="text-2xl font-bold">
+            Upload Notulen
+          </h1>
+        </div>
+
+        {selectedKegiatan && (
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <h2 className="font-semibold text-lg">Kegiatan: {selectedKegiatan.judul}</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              📅 {new Date(selectedKegiatan.tanggal).toLocaleDateString('id-ID')} - 
+              ⏰ {selectedKegiatan.waktu_acara.slice(0, 5)}
+            </p>
+          </div>
+        )}
+
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-lg">
+            {existingNotulen && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-4">File Notulen Saat Ini</h3>
+                <div className="border rounded-lg p-4 bg-blue-50">
+                  <div className="mb-4">
+                    <iframe
+                      src={`${import.meta.env.VITE_API_URL}/uploads/notulen/${existingNotulen.file}`}
+                      width="100%"
+                      height="600px"
+                      className="border rounded-lg"
+                      title="Notulen PDF Viewer"
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <a
+                      href={`${import.meta.env.VITE_API_URL}/uploads/notulen/${existingNotulen.file}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Buka di Tab Baru
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {existingNotulen ? 'Upload Notulen Baru (Ganti File)' : 'Upload File Notulen'}
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={e => setNotulenFile(e.target.files?.[0] || null)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                  Format yang didukung: PDF, DOC, DOCX
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-4 pt-6">
+                <button
+                  onClick={closeNotulenPage}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleNotulenUpload}
+                  disabled={!notulenFile}
+                  className={`px-6 py-3 rounded-lg transition-colors ${
+                    notulenFile 
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                >
+                  {existingNotulen ? 'Update Notulen' : 'Upload Notulen'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDER HALAMAN FORM KEGIATAN
+  if (currentView === 'form') {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={closeForm}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mr-4"
+          >
+            <FiArrowLeft size={20} />
+            Kembali
+          </button>
+          <h1 className="text-2xl font-bold">
+            {editingId ? 'Edit Kegiatan' : 'Tambah Kegiatan Baru'}
+          </h1>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Judul Kegiatan
+                </label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={judul}
+                  onChange={e => setJudul(e.target.value)}
+                  placeholder="Masukkan judul kegiatan"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Deskripsi
+                </label>
+                <textarea
+                  rows={4}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={deskripsi}
+                  onChange={e => setDeskripsi(e.target.value)}
+                  placeholder="Masukkan deskripsi kegiatan"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tanggal
+                  </label>
+                  <DatePicker
+                    selected={tanggal}
+                    onChange={(date: Date | null) => setTanggal(date)}
+                    dateFormat="yyyy-MM-dd"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholderText="Pilih tanggal"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Waktu Acara
+                  </label>
+                  <DatePicker
+                    selected={waktuAcara}
+                    onChange={(date: Date | null) => setWaktuAcara(date)}
+                    showTimeSelect
+                    showTimeSelectOnly
+                    timeIntervals={15}
+                    timeCaption="Waktu"
+                    dateFormat="HH:mm"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholderText="Pilih waktu"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 pt-6">
+                <button
+                  type="button"
+                  onClick={closeForm}
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-3 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={!isFormValid}
+                  className={`px-6 py-3 rounded-lg transition-colors ${
+                    isFormValid 
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                      : 'bg-blue-300 text-white cursor-not-allowed'
+                  }`}
+                >
+                  {editingId ? 'Simpan Perubahan' : 'Tambah Kegiatan'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // RENDER HALAMAN ABSENSI
   if (currentView === 'absensi') {
     return (
       <div className="container mx-auto p-6">
-        <div className="flex mb-6">
+        <div className="flex items-center mb-6">
+          <button
+            onClick={backToList}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mr-4"
+          >
+            <FiArrowLeft size={20} />
+            Kembali
+          </button>
           <h1 className="text-2xl font-bold">
             Absensi Kegiatan
           </h1>
@@ -316,16 +520,15 @@ const KegiatanCRUD: React.FC = () => {
         ) : (
           <>
             {selectedKegiatan && (
-              <div className="bg-gray-50 p-3 rounded-lg mb-6">
-                <h2 className="font-semibold">Kegiatan: <p className="text-ml text-gray-500">{selectedKegiatan.judul}</p></h2>
-                <p className="text-sm text-gray-500">
-                  📅 {new Date(selectedKegiatan.tanggal).toLocaleDateString('id-ID')}
-                </p>
-                <p className="text-sm text-gray-500">
+              <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                <h2 className="font-semibold text-lg">Kegiatan: {selectedKegiatan.judul}</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  📅 {new Date(selectedKegiatan.tanggal).toLocaleDateString('id-ID')} - 
                   ⏰ {selectedKegiatan.waktu_acara.slice(0, 5)}
                 </p>
               </div>
             )}
+            
             <div className="bg-white rounded-lg shadow">
               <div className="p-4 border-b">
                 <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -412,7 +615,7 @@ const KegiatanCRUD: React.FC = () => {
                 disabled={absensiLoading || penghunis.length === 0}
                 className={`px-6 py-2 rounded ${
                   absensiLoading || penghunis.length === 0
-                    ? 'bg-white cursor-not-allowed'
+                    ? 'bg-gray-300 cursor-not-allowed'
                     : 'bg-blue-500 hover:bg-blue-600'
                 } text-white`}
               >
@@ -425,13 +628,13 @@ const KegiatanCRUD: React.FC = () => {
     );
   }
 
-  // Render halaman utama (list kegiatan)
+  // RENDER HALAMAN UTAMA (LIST KEGIATAN)
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Daftar Kegiatan</h1>
         <button
-          onClick={() => openModal()}
+          onClick={() => openForm()}
           className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 w-full sm:w-auto justify-center"
         >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -472,16 +675,16 @@ const KegiatanCRUD: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => openNotulenModal(item)}
+                    onClick={() => openNotulenPage(item)}
                     className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded"
                   >
-                    Upload Notulen
+                    Notulen
                   </button>
                 </div>
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => openModal(item)}
+                    onClick={() => openForm(item)}
                     className="text-yellow-500 hover:text-yellow-600"
                     title="Edit"
                   >
@@ -505,128 +708,7 @@ const KegiatanCRUD: React.FC = () => {
         </div>
       )}
 
-      {/* Modal Form Kegiatan */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
-          <form
-            onSubmit={handleSubmit}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full"
-          >
-            <h2 className="text-xl font-semibold mb-4">{editingId ? 'Edit Kegiatan' : 'Tambah Kegiatan'}</h2>
 
-            <label className="block mb-2">Judul</label>
-            <input
-              type="text"
-              className="w-full mb-4 p-2 border rounded"
-              value={judul}
-              onChange={e => setJudul(e.target.value)}
-            />
-
-            <label className="block mb-2">Deskripsi</label>
-            <textarea
-              className="w-full mb-4 p-2 border rounded"
-              value={deskripsi}
-              onChange={e => setDeskripsi(e.target.value)}
-            ></textarea>
-
-            <label className="block mb-2">Tanggal</label>
-            <DatePicker
-              selected={tanggal}
-              onChange={(date: Date | null) => setTanggal(date)}
-              dateFormat="yyyy-MM-dd"
-              className="w-full mb-4 p-2 border rounded"
-            />
-
-            <label className="block mb-2">Waktu Acara</label>
-            <DatePicker
-              selected={waktuAcara}
-              onChange={(date: Date | null) => setWaktuAcara(date)}
-              showTimeSelect
-              showTimeSelectOnly
-              timeIntervals={15}
-              timeCaption="Waktu"
-              dateFormat="HH:mm"
-              className="w-full mb-4 p-2 border rounded"
-            />
-
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="bg-gray-300 px-4 py-2 rounded"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={!isFormValid}
-                className={`px-4 py-2 rounded ${
-                  isFormValid ? 'bg-blue-600 text-white' : 'bg-blue-300 text-white cursor-not-allowed'
-                }`}
-              >
-                {editingId ? 'Simpan Perubahan' : 'Tambah'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Modal Upload Notulen - DIPERBAIKI */}
-      {isNotulenModalOpen && selectedKegiatan && (
-        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-full max-w-md bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-xl font-semibold mb-4">
-              Upload Notulen - {selectedKegiatan.judul}
-            </h2>
-            
-            {existingNotulen && (
-              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-                <p className="text-sm text-blue-800 mb-2">File saat ini:</p>
-                <a
-                  href={`${import.meta.env.VITE_API_URL}/uploads/notulen/${existingNotulen.file}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline text-sm break-all"
-                >
-                  {existingNotulen.file}
-                </a>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">
-                Pilih File (.pdf, .doc, .docx)
-              </label>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={e => setNotulenFile(e.target.files?.[0] || null)}
-                className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={closeNotulenModal}
-                className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleNotulenUpload}
-                disabled={!notulenFile}
-                className={`px-4 py-2 rounded transition-colors ${
-                  notulenFile 
-                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {existingNotulen ? 'Update' : 'Upload'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
