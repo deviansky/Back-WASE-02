@@ -19,7 +19,7 @@ import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
 import Kegiatan from "./pages/Kegiatana/kegiatan";
-import Pemasukan from "./pages/Keuangan/Pemasukan";
+import Pemasukan from "./pages/Keuangan/keuangan";
 import Products from "./pages/tesAPI";
 import PenghuniCRUD from "./pages/Penghuni";
 import AdminRoute from "./components/routes/AdminRoute";

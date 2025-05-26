@@ -3,7 +3,7 @@ import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import PageMeta from "../../components/common/PageMeta";
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { pemasukanApi, PemasukanItem } from "../../api/api";
+import { keuanganApi, type KeuanganItem } from "../../api/api";
 import Kegiatan from "../Kegiatana/kegiatan"
 
 const monthOrder = [
@@ -13,23 +13,22 @@ const monthOrder = [
 
 export default function Home() {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [data, setData] = React.useState<PemasukanItem[]>([]);
-  const [filter, setFilter] = React.useState<'bulanan' | 'triwulan' | 'tahunan'>('bulanan');
+  const [data, setData] = React.useState<KeuanganItem[]>([]);
+  const [filter] = React.useState<'bulanan' | 'triwulan' | 'tahunan'>('bulanan');
 
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const res = await pemasukanApi.getAll();
+        const res = await keuanganApi.getAll();
+        // Data dari API sudah terformat: { id, nama_bulan, tahun, pemasukan, pengeluaran, created_at, updated_at }
         const sorted = res.sort((a, b) => {
-          const [bulanA, tahunA] = a.bulan.split(" ");
-          const [bulanB, tahunB] = b.bulan.split(" ");
-          const idxA = monthOrder.indexOf(bulanA);
-          const idxB = monthOrder.indexOf(bulanB);
-          return parseInt(tahunA) - parseInt(tahunB) || idxA - idxB;
+          const idxA = monthOrder.indexOf(a.bulan);
+          const idxB = monthOrder.indexOf(b.bulan);
+          return a.id_tahun - b.id_tahun || idxA - idxB;
         });
         setData(sorted);
       } catch (err) {
-        console.error("Gagal memuat data", err);
+        console.error("Gagal memuat data keuangan", err);
       }
     };
 
@@ -37,44 +36,38 @@ export default function Home() {
   }, []);
 
   const groupedData = (() => {
-    const map = new Map();
     if (filter === 'bulanan') return data;
 
-    for (const item of data) {
-      const [bulan, tahun] = item.bulan.split(" ");
-      const quarter = Math.floor(monthOrder.indexOf(bulan) / 3) + 1;
-      const key = filter === 'triwulan' ? `Q${quarter} ${tahun}` : tahun;
-      if (!map.has(key)) map.set(key, { bulan: key, pemasukan: 0, pengeluaran: 0 });
-      map.get(key)[item.tipe] += item.jumlah;
-    }
+    const map = new Map();
+    
+    
     return Array.from(map.values());
   })();
 
   const chartData = (filter === 'bulanan' ? data : groupedData).map(item => {
     if (filter === 'bulanan') {
-      const [bulan, tahun] = item.bulan.split(" ");
       return {
-        month: bulan,
-        month_number: monthOrder.indexOf(bulan) + 1 || 0,
-        year: parseInt(tahun) || 0,
-        sales: item.tipe === 'pemasukan' ? item.jumlah : item.pemasukan || 0,
-        revenue: item.tipe === 'pengeluaran' ? item.jumlah : item.pengeluaran || 0,
+        month: item.bulan,
+        month_number: monthOrder.indexOf(item.bulan) + 1 || 0,
+        year: item.tahun || 0,
+        sales: item.pemasukan || 0,
+        revenue: item.pengeluaran || 0,
       };
     } else if (filter === 'triwulan') {
-      const [quarter, tahun] = item.bulan.split(" ");
-      const quarterNumber = parseInt(quarter.replace("Q", ""));
+      const quarterNumber = item.bulan.includes('Q') ? 
+        parseInt(item.bulan.replace("Q", "")) : 1;
       return {
         month: `Triwulan ${quarterNumber}`,
         month_number: quarterNumber,
-        year: parseInt(tahun) || 0,
+        year: item.tahun || 0,
         sales: item.pemasukan || 0,
         revenue: item.pengeluaran || 0,
       };
     } else {
       return {
-        month: `Tahun ${item.bulan}`,
+        month: item.bulan,
         month_number: 0,
-        year: parseInt(item.bulan),
+        year: item.tahun,
         sales: item.pemasukan || 0,
         revenue: item.pengeluaran || 0,
       };
@@ -90,17 +83,6 @@ export default function Home() {
         </div>
 
         <div className="col-span-12 xl:col-span-8 space-y-6">
-          <div className="flex justify-end">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as 'bulanan' | 'triwulan' | 'tahunan')}
-              className="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
-            >
-              <option value="bulanan">Bulanan</option>
-              <option value="triwulan">Triwulan</option>
-              {/* <option value="tahunan">Tahunan</option> */}
-            </select>
-          </div>
           <StatisticsChart
             externalMonthlyData={chartData}
             externalQuarterlyData={[]}
@@ -115,7 +97,7 @@ export default function Home() {
             selected={date}
             onSelect={setDate}
             className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6"
-          />,
+          />
         </div>
         <div className="col-span-12">
           <Kegiatan />

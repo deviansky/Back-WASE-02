@@ -71,20 +71,19 @@ export interface NotulenItem {
   updated_at?: string
 }
 
-export interface PemasukanItem {
-  id?: number
-  bulan: string
-  jumlah: number
-  deskripsi: string
-  tipe: "pemasukan" | "pengeluaran"
-  created_at?: string
-  updated_at?: string
+// Interface Keuangan gabungan pemasukan & pengeluaran
+export interface KeuanganItem {
+  id?: number;
+  id_bulan: number;
+  id_tahun: number;
+  pemasukan: number;
+  pengeluaran: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Utility function untuk HTTP requests\
-const apiRequest = async <T>(endpoint: string, options?: RequestInit)
-: Promise<T> =>
-{
+// Utility function untuk HTTP requests
+const apiRequest = async <T>(endpoint: string, options?: RequestInit): Promise<T> => {
   try {
     const url = `${API_URL}${endpoint}`
     console.log(`Making request to: ${url}`, options)
@@ -133,7 +132,6 @@ export const penghuniApi = {
 
 // API untuk Statistik
 export const statisticsApi = {
-  // Monthly statistics
   monthly: {
     getByYear: (year: number): Promise<MonthlyStatistic[]> =>
       apiRequest<MonthlyStatistic[]>(`/statistics/monthly?year=${year}`),
@@ -149,7 +147,6 @@ export const statisticsApi = {
       apiRequest<void>(`/statistics/monthly/${year}/${monthNumber}`, { method: "DELETE" }),
   },
 
-  // Quarterly statistics
   quarterly: {
     getByYear: (year: number): Promise<QuarterlyStatistic[]> =>
       apiRequest<QuarterlyStatistic[]>(`/statistics/quarterly?year=${year}`),
@@ -162,7 +159,6 @@ export const statisticsApi = {
       }),
   },
 
-  // Yearly statistics
   yearly: {
     getAll: (): Promise<YearlyStatistic[]> => apiRequest<YearlyStatistic[]>("/statistics/yearly"),
 
@@ -198,25 +194,16 @@ export const kegiatanApi = {
 
 // Absensi API
 export const absensiApi = {
-  // GET - Ambil absensi berdasarkan kegiatan
-  getByKegiatan: async (id_kegiatan: number): Promise<AbsensiItem[]> => {
-    return await apiRequest(`/api/absensi/kegiatan/${id_kegiatan}`, {
-      method: 'GET'
-    });
-  },
+  getByKegiatan: async (id_kegiatan: number): Promise<AbsensiItem[]> =>
+    apiRequest(`/api/absensi/kegiatan/${id_kegiatan}`, { method: 'GET' }),
 
-  // POST - Simpan absensi
-  create: async (id_kegiatan: number, absensi_list: Array<{id_penghuni: number, status_kehadiran: string}>): Promise<any> => {
-    return await apiRequest(`/api/absensi/${id_kegiatan}`, {
+  create: async (id_kegiatan: number, absensi_list: Array<{id_penghuni: number, status_kehadiran: string}>): Promise<any> =>
+    apiRequest(`/api/absensi/${id_kegiatan}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ absensi_list })
-    });
-  }
-};
-
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ absensi_list }),
+    }),
+}
 
 // API untuk Notulen
 export const notulenApi = {
@@ -242,48 +229,46 @@ export const notulenApi = {
   delete: (id: number): Promise<void> => apiRequest<void>(`/notulen/${id}`, { method: "DELETE" }),
 }
 
-// API untuk Pemasukan dan Pengeluaran
-export const pemasukanApi = {
-  getAll: (): Promise<PemasukanItem[]> => apiRequest<PemasukanItem[]>("/pemasukan"),
+// API untuk Keuangan (gabungan pemasukan & pengeluaran)
+export const keuanganApi = {
+  getAll: (): Promise<KeuanganItem[]> => apiRequest<KeuanganItem[]>("/keuangan"),
 
-  create: (data: Omit<PemasukanItem, "id" | "created_at" | "updated_at">): Promise<PemasukanItem> => {
-    // Validasi data sebelum dikirim
-    if (!data.bulan || !data.jumlah || !data.tipe) {
-      console.error("Validation error: Missing required fields", data)
-      throw new Error("Semua field wajib diisi termasuk tipe")
+  create: (data: Omit<KeuanganItem, "id" | "created_at" | "updated_at">): Promise<KeuanganItem> => {
+    if (
+      data.id_bulan == null ||
+      data.id_tahun == null ||
+      data.pemasukan == null ||
+      data.pengeluaran == null
+    ) {
+      throw new Error("Semua field wajib diisi: id_bulan, id_tahun, pemasukan, pengeluaran")
     }
-
-    // Log data yang akan dikirim
-    console.log("Creating pemasukan/pengeluaran with data:", data)
-
-    return apiRequest("/pemasukan", {
+    return apiRequest("/keuangan", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
   },
 
-  update: (id: number, data: Omit<PemasukanItem, "id" | "created_at" | "updated_at">): Promise<PemasukanItem> => {
-    // Validasi data sebelum dikirim
-    if (!data.bulan || !data.jumlah || !data.tipe) {
-      console.error("Validation error: Missing required fields", data)
-      throw new Error("Semua field wajib diisi termasuk tipe")
+  update: (id: number, data: Omit<KeuanganItem, "id" | "created_at" | "updated_at">): Promise<KeuanganItem> => {
+    if (
+      data.id_bulan == null ||
+      data.id_tahun == null ||
+      data.pemasukan == null ||
+      data.pengeluaran == null
+    ) {
+      throw new Error("Semua field wajib diisi: id_bulan, id_tahun, pemasukan, pengeluaran")
     }
-
-    // Log data yang akan dikirim
-    console.log("Updating pemasukan/pengeluaran with data:", data)
-
-    return apiRequest(`/pemasukan/${id}`, {
+    return apiRequest(`/keuangan/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     })
   },
 
-  delete: (id: number): Promise<void> => apiRequest<void>(`/pemasukan/${id}`, { method: "DELETE" }),
+  delete: (id: number): Promise<void> => apiRequest<void>(`/keuangan/${id}`, { method: "DELETE" }),
 }
 
-// Untuk mendukung kompatibilitas dengan kode yang sudah ada
+// Alias functions untuk kompatibilitas
 export const fetchProducts = productApi.getAll
 export const fetchPenghuni = penghuniApi.getAll
 export const addPenghuni = penghuniApi.create
@@ -303,8 +288,8 @@ export const saveQuarterlyStatistic = statisticsApi.quarterly.save
 export const saveYearlyStatistic = statisticsApi.yearly.save
 export const deleteMonthlyStatistic = statisticsApi.monthly.delete
 
-export const fetchAbsensiByKegiatan = absensiApi.getByKegiatan;
-export const createAbsensi = absensiApi.create;
+export const fetchAbsensiByKegiatan = absensiApi.getByKegiatan
+export const createAbsensi = absensiApi.create
 
 export const fetchNotulen = notulenApi.getAll
 export const fetchNotulenByKegiatan = notulenApi.getByKegiatan
@@ -312,7 +297,7 @@ export const createNotulen = notulenApi.create
 export const updateNotulen = notulenApi.update
 export const deleteNotulen = notulenApi.delete
 
-export const fetchPemasukan = pemasukanApi.getAll
-export const createPemasukan = pemasukanApi.create
-export const updatePemasukan = pemasukanApi.update
-export const deletePemasukan = pemasukanApi.delete
+export const fetchKeuangan = keuanganApi.getAll
+export const createKeuangan = keuanganApi.create
+export const updateKeuangan = keuanganApi.update
+export const deleteKeuangan = keuanganApi.delete
